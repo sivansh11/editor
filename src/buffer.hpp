@@ -8,9 +8,12 @@ struct buffer_t {
   buffer_t();
   buffer_t(const std::filesystem::path &path);
 
-  std::string get_line(size_t line_number);
-  size_t get_num_lines();
+  std::string get_line(size_t line_number) const;
+  size_t get_num_lines() const;
   void set_line(size_t line_number, const std::string &line);
+  void insert_new_line(size_t after_line_number);
+  void remove_line(size_t line_number);
+  void save();
 
   void debug();
 
