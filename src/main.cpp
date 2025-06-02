@@ -33,6 +33,7 @@ struct editor_t {
       _cursor_y++;
       if (_cursor_x > static_cast<int>(buffer.get_line(_cursor_y).size()))
         _cursor_x = static_cast<int>(buffer.get_line(_cursor_y).size());
+      update_status_window(buffer);
       update_input_window(buffer);
     }
   }
@@ -41,18 +42,21 @@ struct editor_t {
       _cursor_y--;
       if (_cursor_x > static_cast<int>(buffer.get_line(_cursor_y).size()))
         _cursor_x = static_cast<int>(buffer.get_line(_cursor_y).size());
+      update_status_window(buffer);
       update_input_window(buffer);
     }
   }
   void key_left(const buffer_t &buffer) {
     if (_cursor_x > 0) {
       _cursor_x--;
+      update_status_window(buffer);
       update_input_window(buffer);
     }
   }
   void key_right(const buffer_t &buffer) {
     if (_cursor_x < static_cast<int>(buffer.get_line(_cursor_y).size())) {
       _cursor_x++;
+      update_status_window(buffer);
       update_input_window(buffer);
     }
   }
@@ -65,6 +69,7 @@ struct editor_t {
       str.insert(_cursor_x, 1, character);
       buffer.set_line(_cursor_y, str);
       _cursor_x++;
+      update_status_window(buffer);
       update_input_window(buffer);
     } break;
     case e_command:
@@ -86,6 +91,7 @@ struct editor_t {
       str.erase(old_cursor_x, str.size());
       buffer.set_line(old_cursor_y, str);
       buffer.set_line(_cursor_y, sub_str);
+      update_status_window(buffer);
       update_input_window(buffer);
     } break;
     case e_command:
@@ -119,6 +125,7 @@ struct editor_t {
           }
         }
       }
+      update_status_window(buffer);
       update_input_window(buffer);
     } break;
     case e_command:
@@ -148,38 +155,17 @@ struct editor_t {
       std::string line = buffer.get_line(i);
       mvwprintw(_input, i, 0, "%s", line.c_str());
     }
-    wrefresh(_input);
+    wmove(_input, _cursor_y, _cursor_x);
+    wnoutrefresh(_input);
+    // wrefresh(_input);
   }
   void update_status_window(const buffer_t &buffer) {
     werase(_status);
     mvwprintw(_status, 0, _width - 20, "%i %i", _cursor_y, _cursor_x);
     mvwprintw(_status, 0, 0, "%s", _command.c_str());
-    wrefresh(_status);
+    wnoutrefresh(_status);
+    // wrefresh(_status);
   }
-
-  // TODO: figure out smart updates
-  // void draw_buffer(buffer_t &buffer) {
-  //   werase(_input);
-  //   werase(_status);
-  //   for (uint32_t i = 0; i < buffer.get_num_lines(); i++) {
-  //     std::string line = buffer.get_line(i);
-  //     mvwprintw(_input, i, 0, "%s", line.c_str());
-  //   }
-  //   mvwprintw(_status, 0, _width - 20, "%i %i", _cursor_y, _cursor_x);
-  //   mvwprintw(_status, 0, 0, "%s", _command.c_str());
-  //   switch (_mode) {
-  //   case e_editor:
-  //     wmove(_input, _cursor_y, _cursor_x);
-  //     wrefresh(_status);
-  //     wrefresh(_input);
-  //     break;
-  //   case e_command:
-  //     wmove(_status, 0, _command.size());
-  //     wrefresh(_input);
-  //     wrefresh(_status);
-  //     break;
-  //   }
-  // }
 
   void handle_input(int ch, buffer_t &buffer) {
     switch (ch) {
@@ -269,6 +255,9 @@ int main(int argc, char **argv) {
   if (argc == 2)
     buffer = buffer_t{argv[1]};
 
+  editor.update_input_window(buffer);
+  doupdate();
+
   bool running = true;
   while (running) {
     // editor.draw_buffer(buffer);
@@ -290,6 +279,7 @@ int main(int argc, char **argv) {
       // }
       break;
     }
+    doupdate();
   }
 
   endwin();
